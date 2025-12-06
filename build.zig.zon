@@ -1,0 +1,30 @@
+.{ .name = .zuimo, .fingerprint = 0x63f9c65124240bcc, .version = "0.0.0", .minimum_zig_version = "0.15.0", .paths = .{
+    "build.zig",
+    "build.zig.zon",
+    "src",
+}, .dependencies = .{
+    .system_sdk = .{
+        .url = "https://github.com/zig-gamedev/system_sdk/archive/c0dbf11cdc17da5904ea8a17eadc54dee26567ec.tar.gz",
+        .hash = "system_sdk-0.3.0-dev-alwUNnYaaAJAtIdE2fg4NQfDqEKs7QCXy_qYukAOBfmF",
+    },
+
+    .zglfw = .{
+        .url = "https://github.com/zig-gamedev/zglfw/archive/feeeff9386dd44ba2c18488113023865c41b80a4.tar.gz",
+        .hash = "zglfw-0.10.0-dev-zgVDNLyhIQCZR_rbIf7hnCKuifzcmPOLOQhd_hrqq8cl",
+    },
+
+    .zgui = .{
+        .url = "https://github.com/zig-gamedev/zgui/archive/a0fb7ec0ed02ec52e703f5959abe3eb1d70ac68d.tar.gz",
+        .hash = "zgui-0.6.0-dev--L6sZLvtbQCQqMlhFtvgCE3CAmYf-3wVbpqMjzvS6ffi",
+    },
+
+    .zopengl = .{
+        .url = "https://github.com/zig-gamedev/zopengl/archive/33ae578d91692c814e7d6b4b42573142475f68d0.tar.gz",
+        .hash = "zopengl-0.6.0-dev-5-tnz7Y8CQCW_JRgxPCM4ETsKGOGHddqw5y1XaXhrsb4",
+    },
+
+    .ztracy = .{
+        .url = "git+https://github.com/zig-gamedev/ztracy?ref=main#3cc6a4a1502fdea2e4d3869099e39d9c5e8b98a5",
+        .hash = "ztracy-0.14.0-dev-zHJSq8SJGADr475eGiGJzmX_-P5sDoU564IQSVfZxmYC",
+    },
+} }
