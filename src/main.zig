@@ -1,4 +1,5 @@
 const std = @import("std");
+const fs = std.fs;
 
 const zgui = @import("zgui");
 const glfw = @import("zglfw");
@@ -82,9 +83,11 @@ pub fn main() !void {
         \\
         \\void main()
         \\{
-        \\  color = vec4(1.0, 0.0, 0.0, 1.0);
+        \\  color = vec4(1.0, 1.0, 0.0, 1.0);
         \\}
     ;
+    _ = vertexShaderSrc;
+    _ = fragmentShaderSrc;
 
     var vao: u32 = undefined;
     gl.genVertexArrays(1, &vao);
@@ -100,8 +103,9 @@ pub fn main() !void {
     gl.vertexAttribPointer(0, 2, gl.FLOAT, gl.FALSE, 2 * 4, null);
     gl_check_error();
 
-    const shader = create_shader(vertexShaderSrc, fragmentShaderSrc);
+    const shader = create_shader();
     gl.useProgram(shader);
+    defer gl.deleteProgram(shader);
 
     // =================================
 
@@ -155,30 +159,89 @@ fn compile_shader(shaderType: c_uint, source: [*c]const u8) c_uint {
     gl.compileShader(id);
 
     var result: i32 = undefined;
-    gl.getShaderiv(id, gl.INFO_LOG_LENGTH, &result);
-    if (result != gl.FALSE) {
-        std.debug.print("Shader error", .{});
+    gl.getShaderiv(id, gl.COMPILE_STATUS, &result);
+    if (result == gl.FALSE) {
+        var length: c_int = undefined;
+        gl.getShaderiv(id, gl.INFO_LOG_LENGTH, &length);
+
+        const allocator = std.heap.page_allocator;
+        const message = allocator.alloc(u8, @intCast(length)) catch return 0;
+        defer allocator.free(message);
+        const cMessage: [*c]u8 = message.ptr;
+        gl.getShaderInfoLog(id, length, &length, cMessage);
+
+        if (shaderType == gl.VERTEX_SHADER) {
+            std.debug.print("Vertex shader error\n", .{});
+        } else if (shaderType == gl.FRAGMENT_SHADER) {
+            std.debug.print("Fragment shader error\n", .{});
+        } else {
+            std.debug.print("Unknown shader error\n", .{});
+        }
+
+        std.debug.print("Log length: {d}\n", .{length});
+        std.debug.print("Error message: {s}\n", .{message});
+        gl.deleteShader(id);
     }
 
     return id;
 }
 
-fn create_shader(vertexShader: [*c]const u8, fragmentShader: [*c]const u8) c_uint {
-    const program = gl.createProgram();
-    const vs = compile_shader(gl.VERTEX_SHADER, vertexShader);
-    const fs = compile_shader(gl.FRAGMENT_SHADER, fragmentShader);
+fn create_shader() c_uint {
+    const allocator = std.heap.page_allocator;
+    const shaderSrc = loadShaderFileAlloc(allocator) catch return 0;
+    defer allocator.free(shaderSrc);
 
-    gl.attachShader(program, vs);
-    gl.attachShader(program, fs);
+    // find #vertex
+    var vertexShaderStartIdx: usize = 0;
+    for (0..shaderSrc.len) |i| {
+        const vertexHeader = "#vertex\n";
+        const iEnd = i + vertexHeader.len;
+        const currSlice = shaderSrc[i..iEnd];
+        if (std.mem.eql(u8, vertexHeader, currSlice)) {
+            vertexShaderStartIdx = iEnd;
+            break;
+        }
+    }
+
+    // find #fragment
+    var vertexShaderEndIdx: usize = 0;
+    var fragmentShaderStartIdx: usize = 0;
+    for (vertexShaderStartIdx..shaderSrc.len) |i| {
+        const fragmentHeader = "#fragment\n";
+        const iEnd = i + fragmentHeader.len;
+        const currSlice = shaderSrc[i..iEnd];
+        if (std.mem.eql(u8, fragmentHeader, currSlice)) {
+            vertexShaderEndIdx = i;
+            fragmentShaderStartIdx = iEnd;
+            break;
+        }
+    }
+
+    const vertexShader = shaderSrc[vertexShaderStartIdx..vertexShaderEndIdx];
+    const fragmentShader = shaderSrc[fragmentShaderStartIdx..];
+
+    const vertexShaderMemory = allocator.alloc(u8, vertexShader.len) catch return 0;
+    defer allocator.free(vertexShaderMemory);
+    std.mem.copyForwards(u8, vertexShaderMemory, vertexShader);
+
+    const fragmentShaderMemory = allocator.alloc(u8, fragmentShader.len) catch return 0;
+    defer allocator.free(fragmentShaderMemory);
+    std.mem.copyForwards(u8, fragmentShaderMemory, fragmentShader);
+
+    const cVertex: [*c]const u8 = vertexShaderMemory.ptr;
+    const cFragment: [*c]const u8 = fragmentShaderMemory.ptr;
+
+    const program = gl.createProgram();
+    const vertex = compile_shader(gl.VERTEX_SHADER, cVertex);
+    const fragment = compile_shader(gl.FRAGMENT_SHADER, cFragment);
+
+    gl.attachShader(program, vertex);
+    gl.attachShader(program, fragment);
     gl.linkProgram(program);
     gl.validateProgram(program);
 
-    gl.deleteShader(vs);
-    gl.deleteShader(fs);
-    // const a =
-    // \\ To jest linia
-    // \\ druga"
-    // ;
+    gl.deleteShader(vertex);
+    gl.deleteShader(fragment);
 
     return program;
 }
@@ -200,3 +263,22 @@ fn gl_check_error() void {
         std.debug.print("{d}\n", .{err});
     }
 }
+
+fn loadShaderFileAlloc(allocator: std.mem.Allocator) ZuimoError![]u8 {
+    const file = fs.cwd().openFile("content/shader.glsl", .{}) catch return error.Unknown;
+    // const file = fs.cwd().openFile("content/test", .{}) catch return;
+    defer file.close();
+
+    const buf: [4]u8 = undefined; // smaller buffer causes an error
+    var reader = fs.File.reader(file, @constCast(buf[0..]));
+
+    const size = reader.getSize() catch 0;
+    const fileContents = allocator.alloc(u8, size) catch return error.Unknown;
+
+    reader.interface.readSliceAll(fileContents) catch return error.Unknown;
+    return fileContents;
+}
+
+const ZuimoError = error{
+    Unknown,
+};
