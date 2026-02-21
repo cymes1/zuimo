@@ -6,11 +6,16 @@ const glfw = @import("zglfw");
 const zopengl = @import("zopengl");
 const ztracy = @import("ztracy");
 const gl = zopengl.bindings;
+const state_machine = @import("utils/state-machine.zig");
 
 const content_dir = "content/";
 const window_title = "zig-gamedev: minimal zgpu glfw opengl3";
 
 pub fn main() !void {
+    state_machine.t();
+
+    // ========================
+
     try glfw.init();
     defer glfw.terminate();
 
@@ -193,10 +198,15 @@ fn create_shader() c_uint {
 
     // find #vertex
     var vertexShaderStartIdx: usize = 0;
+    std.debug.print("\n", .{});
     for (0..shaderSrc.len) |i| {
         const vertexHeader = "#vertex\n";
         const iEnd = i + vertexHeader.len;
         const currSlice = shaderSrc[i..iEnd];
+        std.debug.print("line len: {d}\n", .{vertexHeader[7]});
+        std.debug.print("head len: {d}\n", .{currSlice[7]});
+        std.debug.print("line: {s}\n", .{currSlice});
+        std.debug.print("head: {s}\n", .{vertexHeader});
         if (std.mem.eql(u8, vertexHeader, currSlice)) {
             vertexShaderStartIdx = iEnd;
             break;
