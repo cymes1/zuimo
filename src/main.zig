@@ -112,6 +112,9 @@ pub fn main() !void {
     gl.useProgram(shader);
     defer gl.deleteProgram(shader);
 
+    const location = gl.getUniformLocation(shader, "u_Color");
+    std.debug.assert(location != -1);
+
     // =================================
 
     while (!window.shouldClose() and window.getKey(.escape) != .press) {
@@ -121,6 +124,8 @@ pub fn main() !void {
 
         gl.useProgram(shader);
         gl.bindBuffer(gl.ARRAY_BUFFER, buffId);
+
+        gl.uniform4f(location, 0.2, 0.3, color, 1.0);
 
         gl.drawArrays(gl.TRIANGLES, 0, 3);
         // gl_check_error();
@@ -148,13 +153,16 @@ pub fn main() !void {
     }
 }
 
+var color: f32 = 1.0;
+
 fn key_callback(window: *glfw.Window, key: glfw.Key, scancode: c_int, action: glfw.Action, mods: glfw.Mods) callconv(.c) void {
     _ = window;
     _ = scancode;
     _ = mods;
 
-    if (key == glfw.Key.e and action == glfw.Action.press)
-        std.debug.print("Button pressed\n", .{});
+    if (key == glfw.Key.e and action == glfw.Action.press) {
+        color = color - 0.05;
+    }
 }
 
 fn compile_shader(shaderType: c_uint, source: [*c]const u8) c_uint {
