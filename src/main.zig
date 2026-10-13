@@ -12,6 +12,11 @@ const content_dir = "content/";
 const window_title = "zig-gamedev: minimal zgpu glfw opengl3";
 
 pub fn main() !void {
+    state_machine.transitionTo(state_machine.main_state);
+    state_machine.t();
+    state_machine.transitionTo(state_machine.second_state);
+    state_machine.t();
+    state_machine.transitionTo(state_machine.main_state);
     state_machine.t();
 
     // ========================
@@ -211,10 +216,6 @@ fn create_shader() c_uint {
         const vertexHeader = "#vertex\n";
         const iEnd = i + vertexHeader.len;
         const currSlice = shaderSrc[i..iEnd];
-        std.debug.print("line len: {d}\n", .{vertexHeader[7]});
-        std.debug.print("head len: {d}\n", .{currSlice[7]});
-        std.debug.print("line: {s}\n", .{currSlice});
-        std.debug.print("head: {s}\n", .{vertexHeader});
         if (std.mem.eql(u8, vertexHeader, currSlice)) {
             vertexShaderStartIdx = iEnd;
             break;
