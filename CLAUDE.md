@@ -1,6 +1,10 @@
 # zuimo
 
-Personal Zig playground for graphics/UI experiments. The owner is learning Zig, so prefer clear, idiomatic code over clever code.
+Personal Zig playground: a game built for graphics/UI experiments. Refer to it as "the game", not "the app". The owner is learning Zig, so prefer clear, idiomatic code over clever code.
+
+## Terminology
+- The program is "the game", not "the app".
+- A state of the game state machine is a "game state" (types: `GameState`, `MenuGameState`, ...). Don't use a bare "state" for it, since that word is used in many other places.
 
 ## Toolchain
 - Zig **0.15.2** (`minimum_zig_version = "0.15.0"`). Use 0.15 APIs (e.g. the new `std.Io` reader/writer interfaces, `callconv(.c)`).
